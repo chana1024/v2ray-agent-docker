@@ -1,0 +1,20 @@
+
+version: '3.8'
+
+services:
+  v2ray-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./v2ray-data:/etc/v2ray-agent
+    environment:
+      - DOMAIN=your_domain.com
+      - UUID=your_uuid
+      - CORE_TYPE=sing-box # xray or sing-box
+      - PROTOCOLS=VLESS_vision_reality,VLESS_ws_tls # Comma-separated list of protocols
+      - CDN_ADDRESS=your_cdn_address.com # Optional: for CDN support
+    restart: unless-stopped
