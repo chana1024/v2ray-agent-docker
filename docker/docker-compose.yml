@@ -4,7 +4,7 @@ services:
   v2ray-agent:
     build: .
     container_name: v2ray-agent
-    restart: unless-stopped
+    #restart: unless-stopped
     volumes:
       - acme_data:/root/.acme.sh
       - tls_data:/etc/v2ray-agent/tls
@@ -18,7 +18,7 @@ services:
       # - "35000:35000/udp" # 映射 Hysteria2 UDP 端口
     environment:
       # --- 核心设置 (必需) ---
-      - CORE_TYPE=1                    # 1: Xray-core, 2: Sing-box
+      - CORE_TYPE=2                    # 1: Xray-core, 2: Sing-box
 
       # --- 协议选择 (必需, 逗号分隔) ---
       # 使用原始脚本菜单中的数字ID来选择要安装的协议组合。
@@ -37,11 +37,10 @@ services:
       # 9: Tuic (需要TLS)
       # 10: Naive (需要TLS)
       # 11: VMess + HTTPUpgrade (需要TLS)
-      - INSTALL_PROTOCOLS=0,1,7
+      - INSTALL_PROTOCOLS=1,9
 
       # --- TLS & 域名设置 (如果安装了任何需要TLS的协议, 则此项为必需) ---
-      - DOMAIN=your.domain.com
-      - SSL_EMAIL=your-email@example.com
+      - DOMAIN=san.fkgfw.store
 
       # --- 通用可选设置 ---
       - PORT=443                       # 主要监听端口 (例如 VLESS-Vision 的端口)
@@ -77,7 +76,7 @@ services:
       # --- ACME DNS API 设置 (可选, 适用于NAT或CDN后的服务器) ---
       # - USE_DNS_API=y
       # - DNS_PROVIDER=cloudflare        # 'cloudflare' or 'aliyun'
-      # - CF_API_TOKEN=your-cloudflare-api-token
+      - CF_API_TOKEN=oDCYW72DWjFd-2lYLK0pVZloO499A0zK-2yifmbA
       # - USE_WILDCARD_CERT=n            # 'y' for *.your.domain.com
 
 volumes:

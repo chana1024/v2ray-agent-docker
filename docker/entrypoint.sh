@@ -17,6 +17,9 @@
 # Section: Initial Setup & Utilities
 # -------------------------------------------------------------
 export LANG=en_US.UTF-8
+# 获取当前脚本所在的目录的绝对路径
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+source "${SCRIPT_DIR}/tls.sh"
 
 echoContent() {
     case $1 in
@@ -140,16 +143,19 @@ installTools() {
         installNginxTools
     fi
 
-    if [[ ! -d "$HOME/.acme.sh" ]] && [[ ! "${INSTALL_PROTOCOLS}" =~ "7" && -z "${INSTALL_PROTOCOLS//,/}" ]]; then
-        echoContent green " ---> Installing acme.sh"
-        if [[ -z "${SSL_EMAIL}" ]]; then
-            echoContent red "SSL_EMAIL env var is required for acme.sh installation."
-            exit 1
-        fi
-        curl -s https://get.acme.sh | sh -s "email=${SSL_EMAIL}" >/etc/v2ray-agent/tls/acme.log 2>&1
-        if [[ $? -ne 0 ]]; then
-            echoContent red "acme.sh installation failed. Check log at /etc/v2ray-agent/tls/acme.log"
-            exit 1
+    if [[ ! -d "$HOME/.acme.sh" ]] || [[ -d "$HOME/.acme.sh" && -z $(find "$HOME/.acme.sh/acme.sh") ]]; then
+        echoContent green " ---> 安装acme.sh"
+        curl -s https://get.acme.sh | sh >/etc/v2ray-agent/tls/acme.log 2>&1
+
+        if [[ ! -d "$HOME/.acme.sh" ]] || [[ -z $(find "$HOME/.acme.sh/acme.sh") ]]; then
+            echoContent red "  acme安装失败--->"
+            tail -n 100 /etc/v2ray-agent/tls/acme.log
+            echoContent yellow "错误排查:"
+            echoContent red "  1.获取Github文件失败，请等待Github恢复后尝试，恢复进度可查看 [https://www.githubstatus.com/]"
+            echoContent red "  2.acme.sh脚本出现bug，可查看[https://github.com/acmesh-official/acme.sh] issues"
+            echoContent red "  3.如纯IPv6机器，请设置NAT64,可执行下方命令，如果添加下方命令还是不可用，请尝试更换其他NAT64"
+            echoContent skyBlue "  sed -i \"1i\\\nameserver 2a00:1098:2b::1\\\nnameserver 2a00:1098:2c::1\\\nnameserver 2a01:4f8:c2c:123f::1\\\nnameserver 2a01:4f9:c010:3f02::1\" /etc/resolv.conf"
+            exit 0
         fi
     fi
 }
