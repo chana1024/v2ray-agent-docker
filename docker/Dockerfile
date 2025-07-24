@@ -1,29 +1,12 @@
 
-# 使用轻量级的 Alpine Linux 作为基础镜像
-FROM alpine:latest
+# 使用轻量级的 Debian 作为基础镜像
+FROM debian:bookworm-slim
 
 # 设置环境变量，避免交互式提示
-ENV LANG=en_US.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
 # 安装必要的软件包
-RUN apk update && apk add --no-cache \
-    bash \
-    curl \
-    nginx \
-    socat \
-    unzip \
-    jq \
-    binutils \
-    openssl \
-    qrencode \
-    sudo \
-    lsof \
-    bind-tools \
-    coreutils \
-    gnupg \
-    grep \
-    sed \
-    && rm -rf /var/cache/apk/*
+RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates     bash  wget   curl     nginx     socat     unzip     jq     binutils     openssl     qrencode     sudo     lsof     dnsutils     coreutils     gnupg     grep     sed     && rm -rf /var/lib/apt/lists/*
 
 # 安装 acme.sh
 RUN curl https://get.acme.sh | sh

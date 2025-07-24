@@ -1,20 +1,85 @@
-
 version: '3.8'
 
 services:
   v2ray-agent:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
+    container_name: v2ray-agent
+    restart: unless-stopped
+    volumes:
+      - acme_data:/root/.acme.sh
+      - tls_data:/etc/v2ray-agent/tls
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./v2ray-data:/etc/v2ray-agent
+      # --- 如果你使用了自定义或随机端口，请务必在这里映射它们 ---
+      # 示例:
+      # - "2087:2087"       # 映射 Reality 端口
+      # - "35000:35000"     # 映射 Hysteria2 TCP 端口
+      # - "35000:35000/udp" # 映射 Hysteria2 UDP 端口
     environment:
-      - DOMAIN=your_domain.com
-      - UUID=your_uuid
-      - CORE_TYPE=sing-box # xray or sing-box
-      - PROTOCOLS=VLESS_vision_reality,VLESS_ws_tls # Comma-separated list of protocols
-      - CDN_ADDRESS=your_cdn_address.com # Optional: for CDN support
-    restart: unless-stopped
+      # --- 核心设置 (必需) ---
+      - CORE_TYPE=1                    # 1: Xray-core, 2: Sing-box
+
+      # --- 协议选择 (必需, 逗号分隔) ---
+      # 使用原始脚本菜单中的数字ID来选择要安装的协议组合。
+      # --- 通用协议 ---
+      # 0: VLESS + TCP + Vision (需要TLS)
+      # 1: VLESS + WS (需要TLS)
+      # 3: VMess + WS (需要TLS)
+      # 4: Trojan + TCP (需要TLS)
+      # 7: VLESS + Reality + Vision (无需TLS/域名)
+      # --- 仅 Xray-core 支持 ---
+      # 5: VLESS + gRPC (需要TLS)
+      # 12: VLESS + Reality + XHTTP (无需TLS/域名)
+      # --- 仅 Sing-box 支持 ---
+      # 6: Hysteria2 (需要TLS)
+      # 8: VLESS + Reality + gRPC (无需TLS/域名)
+      # 9: Tuic (需要TLS)
+      # 10: Naive (需要TLS)
+      # 11: VMess + HTTPUpgrade (需要TLS)
+      - INSTALL_PROTOCOLS=0,1,7
+
+      # --- TLS & 域名设置 (如果安装了任何需要TLS的协议, 则此项为必需) ---
+      - DOMAIN=your.domain.com
+      - SSL_EMAIL=your-email@example.com
+
+      # --- 通用可选设置 ---
+      - PORT=443                       # 主要监听端口 (例如 VLESS-Vision 的端口)
+      - UUID=your-predefined-uuid      # 可选: 指定一个 UUID
+      - USER_EMAIL=user1               # 可选: 指定一个用户标识
+      - CUSTOM_PATH=mysecretpath       # 可选: 为 WS/gRPC/HTTPUpgrade 指定路径
+      - BLOG_TEMPLATE_ID=6             # 可选: 伪装站模板 (1-9)
+      - SKIP_IP_CHECK=y                # 可选: 'y' 跳过域名IP与服务器IP的一致性检查
+
+      # --- Reality 专用设置 (如果安装了协议 7, 8, 12) ---
+      - REALITY_PORT=2087              # 可选: Reality 协议的端口 (不填则随机)
+      - REALITY_SERVER_NAME=www.microsoft.com # 可选: Reality 伪装的目标域名 (不填则随机选择)
+      - REALITY_GRPC_PORT=2088         # 可选: Sing-box Reality gRPC 端口 (不填则随机)
+      - XHTTP_PORT=2089                # 可选: Xray Reality XHTTP 端口 (不填则随机)
+
+      # --- Hysteria2 专用设置 (Sing-box, 协议 6) ---
+      - HYSTERIA_PORT=35000            # 可选: Hysteria2 端口 (不填则随机)
+      - HYSTERIA2_UP_MBPS=50           # 可选: Hysteria2 上传速度 (Mbps)
+      - HYSTERIA2_DOWN_MBPS=200        # 可选: Hysteria2 下载速度 (Mbps)
+
+      # --- Tuic 专用设置 (Sing-box, 协议 9) ---
+      - TUIC_PORT=36000                # 可选: Tuic 端口 (不填则随机)
+      - TUIC_ALGORITHM=bbr             # 可选: 拥塞控制算法 (bbr, cubic, new_reno)
+
+      # --- Sing-box 端口覆盖 (可选, 不填则随机) ---
+      # - VLESS_VISION_PORT=443
+      # - VLESS_WS_PORT=10001
+      # - VMESS_WS_PORT=10002
+      # - TROJAN_PORT=10003
+      # - NAIVE_PORT=10004
+      # - VMESS_HTTPUPGRADE_PORT=10005
+
+      # --- ACME DNS API 设置 (可选, 适用于NAT或CDN后的服务器) ---
+      # - USE_DNS_API=y
+      # - DNS_PROVIDER=cloudflare        # 'cloudflare' or 'aliyun'
+      # - CF_API_TOKEN=your-cloudflare-api-token
+      # - USE_WILDCARD_CERT=n            # 'y' for *.your.domain.com
+
+volumes:
+  acme_data:
+  tls_data:
