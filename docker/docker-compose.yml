@@ -6,8 +6,7 @@ services:
     container_name: v2ray-agent
     #restart: unless-stopped
     volumes:
-      - acme_data:/root/.acme.sh
-      - tls_data:/etc/v2ray-agent/tls
+      - v2ray-agent:/etc/v2ray-agent
     ports:
       - "80:80"
       - "443:443"
@@ -37,16 +36,16 @@ services:
       # 9: Tuic (需要TLS)
       # 10: Naive (需要TLS)
       # 11: VMess + HTTPUpgrade (需要TLS)
-      - INSTALL_PROTOCOLS=1,9
+      - INSTALL_PROTOCOLS=9
 
       # --- TLS & 域名设置 (如果安装了任何需要TLS的协议, 则此项为必需) ---
       - DOMAIN=san.fkgfw.store
 
       # --- 通用可选设置 ---
       - PORT=443                       # 主要监听端口 (例如 VLESS-Vision 的端口)
-      - UUID=your-predefined-uuid      # 可选: 指定一个 UUID
+      - UUID=4f74412c-69f0-11f0-95f2-636feb809eb2 # 可选: 指定一个 UUID
       - USER_EMAIL=user1               # 可选: 指定一个用户标识
-      - CUSTOM_PATH=mysecretpath       # 可选: 为 WS/gRPC/HTTPUpgrade 指定路径
+      - CUSTOM_PATH=WS      # 可选: 为 WS/gRPC/HTTPUpgrade 指定路径
       - BLOG_TEMPLATE_ID=6             # 可选: 伪装站模板 (1-9)
       - SKIP_IP_CHECK=y                # 可选: 'y' 跳过域名IP与服务器IP的一致性检查
 
@@ -77,8 +76,13 @@ services:
       # - USE_DNS_API=y
       # - DNS_PROVIDER=cloudflare        # 'cloudflare' or 'aliyun'
       - CF_API_TOKEN=oDCYW72DWjFd-2lYLK0pVZloO499A0zK-2yifmbA
+      - SSL_EMAIL=linzhinan1024@gmail.com
       # - USE_WILDCARD_CERT=n            # 'y' for *.your.domain.com
 
 volumes:
-  acme_data:
-  tls_data:
+  v2ray-agent:
+    driver: local
+    driver_opts:
+      type: none
+      device: /etc/v2ray-agent
+      o: bind

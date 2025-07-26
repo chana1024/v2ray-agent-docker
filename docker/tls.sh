@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export DOMAIN="san.fkgfw.store"
+export CF_API_TOKEN="oDCYW72DWjFd-2lYLK0pVZloO499A0zK-2yifmbA"
+export SSL_EMAIL="linzhinan1024@gmail.com"
 #================================================
 # 颜色定义
 #================================================
@@ -36,6 +39,9 @@ readAcmeTLS() {
     fi
 
     dnsTLSDomain=$(echo "${readAcmeDomain}" | awk -F "." '{$1="";print $0}' | sed 's/^[[:space:]]*//' | sed 's/ /./g')
+    dnsAPIDomain="*.${dnsTLSDomain}"
+    echo Content skyBlue " ---> 读取域名: ${dnsTLSDomain}"
+    echo Content skyBlue " ---> 读取域名: ${dnsAPIDomain}"
     if [[ -d "$HOME/.acme.sh/*.${dnsTLSDomain}_ecc" && -f "$HOME/.acme.sh/*.${dnsTLSDomain}_ecc/*.${dnsTLSDomain}.key" && -f "$HOME/.acme.sh/*.${dnsTLSDomain}_ecc/*.${dnsTLSDomain}.cer" ]]; then
         installedDNSAPIStatus=true
     fi
@@ -44,13 +50,8 @@ readAcmeTLS() {
 renewalTLS() {
    readAcmeTLS
     local DOMAIN=${DOMAIN}
-
-    if [[ -f "/etc/v2ray-agent/tls/ssl_type" ]]; then
-        if grep -q "buypass" <"/etc/v2ray-agent/tls/ssl_type"; then
-            sslRenewalDays=180
-        fi
-    fi
-    if [[ -d "$HOME/.acme.sh/${DOMAIN}_ecc" && -f "$HOME/.acme.sh/${DOMAIN}_ecc/${DOMAIN}.key" && -f "$HOME/.acme.sh/${DOMAIN}_ecc/${DOMAIN}.cer" ]] || [[ "${installedDNSAPIStatus}" == "true" ]]; then
+    sslRenewalDays=90
+    if [[ -d "$HOME/.acme.sh/${dnsAPIDomain}_ecc" && -f "$HOME/.acme.sh/${dnsAPIDomain}_ecc/${dnsAPIDomain}.key" && -f "$HOME/.acme.sh/${dnsAPIDomain}_ecc/${dnsAPIDomain}.cer" ]] || [[ "${installedDNSAPIStatus}" == "true" ]]; then
         modifyTime=
 
         if [[ "${installedDNSAPIStatus}" == "true" ]]; then
@@ -122,7 +123,8 @@ checkTLStatus() {
 #================================================
 # 主执行函数
 #================================================
-main() {
+installTLS() {
+    readAcmeTLS
     # --- 1. 从环境变量获取并验证配置 ---
     echoContent green "脚本开始执行：检查环境变量..."
 
@@ -146,7 +148,7 @@ main() {
     # --- 2. 检查证书存在性，决定执行“续订”还是“首次签发” ---
     if [[ -s "${certPath}" && -s "${keyPath}" ]]; then
         # **续订逻辑 (根据您提供的 renewalTLS 函数)**
-        renewalTLS 1
+        renewalTLS 
     else
         # **首次签发逻辑**
         echoContent green "未找到证书，开始执行首次证书签发流程..."
@@ -159,17 +161,17 @@ main() {
         
         # 签发证书
         echoContent green "使用 Cloudflare DNS API 申请证书..."
-        sudo CF_API_TOKEN="${CF_API_TOKEN}" "${acmeSHPath}" --issue \
-            -d "${DOMAIN}" -d "*.${DOMAIN}" \
+        sudo CF_Token="${CF_API_TOKEN}" "${acmeSHPath}" --issue \
+            -d "${dnsAPIDomain}" -d "${dnsTLSDomain}" \
             --dns dns_cf -k ec-256 --server "letsencrypt" >> "${acmeLogPath}" 2>&1
 
-        if [[ ! -f "$HOME/.acme.sh/${DOMAIN}_ecc/${DOMAIN}.cer" ]]; then
+        if [[ ! -f "$HOME/.acme.sh/${dnsAPIDomain}_ecc/${dnsAPIDomain}.cer" ]]; then
             echoContent red "证书申请失败! 请检查日志: ${acmeLogPath}"
             exit 1
         fi
         
         echoContent green "证书申请成功, 正在安装..."
-        sudo "${acmeSHPath}" --install-cert -d "${DOMAIN}" --ecc \
+        sudo "${acmeSHPath}" --install-cert -d "${dnsAPIDomain}" --ecc \
             --fullchain-file "${certPath}" \
             --key-file "${keyPath}" >> "${acmeLogPath}" 2>&1
             
@@ -210,6 +212,4 @@ installCron() {
 # ================================================
 # 脚本入口
 # ================================================
-main
-installCron
-echoContent green "所有任务执行完毕。"!/bin/bash
+installTLS

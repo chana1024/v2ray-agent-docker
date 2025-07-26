@@ -6,7 +6,7 @@ FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 安装必要的软件包
-RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates     bash  wget   curl     nginx     socat     unzip     jq     binutils     openssl     qrencode     sudo     lsof     dnsutils     coreutils     gnupg     grep     sed     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends procps cron  ca-certificates     bash  wget   curl     nginx     socat     unzip     jq     binutils     openssl     qrencode     sudo     lsof     dnsutils     coreutils     gnupg     grep     sed     && rm -rf /var/lib/apt/lists/*
 
 # 安装 acme.sh
 RUN curl https://get.acme.sh | sh
@@ -15,8 +15,8 @@ RUN curl https://get.acme.sh | sh
 WORKDIR /app
 
 # 拷贝入口点脚本和辅助脚本
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY entrypoint.sh tls.sh nginxManage.sh coreManage.sh /app/
+RUN chmod +x /app/entrypoint.sh /app/tls.sh /app/nginxManage.sh /app/coreManage.sh
 
 # 创建 v2ray-agent 相关目录
 RUN mkdir -p /etc/v2ray-agent/tls \
